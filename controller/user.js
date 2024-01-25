@@ -17,6 +17,8 @@ exports.Login = async (req, res) => {
     if (passwordMatch) {
       req.session.username = user.username;
       req.session.email = user.email;
+      req.session.isLoggedIn = true;
+
       return res.json({ message: "Login berhasil", user });
     } else {
       req.session.destroy();
@@ -29,6 +31,7 @@ exports.Login = async (req, res) => {
 };
 
 exports.Logout = (req, res) => {
+  console.log(req.session.username);
   try {
     req.session.destroy((err) => {
       if (err) {

@@ -5,14 +5,22 @@ const router = require("./route");
 const session = require("express-session");
 const MongoStore = require("connect-mongodb-session")(session);
 const cors = require("cors");
+const { rateLimit } = require("express-rate-limit");
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URIS;
 
-dotenv.config();
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 menit
+  max: 100, // Maksimum 100 permintaan dalam waktu windowMs
+  message:
+    "Terlalu banyak permintaan dari IP Anda. Silakan coba lagi dalam beberapa menit.",
+});
+
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
 mongoose
   .connect(
@@ -41,13 +49,14 @@ app.use(
   session({
     secret: "secret-session",
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: store,
     cookie: { maxAge: 1000 * 60 * 60 * 24 },
   })
 );
 
 app.use(router);
+app.use(limiter);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
